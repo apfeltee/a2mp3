@@ -14,4 +14,6 @@ Batch conversion is just as easy:
     a2mp3 directory/full/of/wma/files/*.wma
     # the MP3 files are written in the same location!
 
+If the program [`gettags`](http://kevinboone.net/README_gettags.html) (kevinboone.net) is in your $PATH, a2mp3 will automatically adopt the tags from the source file (if any). This program, gettags, supports flac, ogg, and mp3 formats.
+
 a2mp3 is written to be easily extended, and the code is well commented. So if it's missing a feature you miss, adding it is trivial.
