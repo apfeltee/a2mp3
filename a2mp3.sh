@@ -133,8 +133,32 @@ function conv_mplayer
       ;;
   esac
   log "converter finished successfully, starting lame"
-  verbose "running lame with arguments: (lame -V $cfg_lamevbr -m -s \"$audiodump\" -o \"$destination\")"
-  if lame -V "$cfg_lamevbr" -m s "$audiodump" -o "$destination"; then
+  #####
+  #####
+  ##### retrieve tags using gettags and set additional options
+  #####
+  #####
+  more_options=("--add-id3v2" -V $cfg_lamevbr -m s "$audiodump" -o "$destination")
+  # check if we can even use gettags
+  if type gettags &>/dev/null; then
+    # okay, time to get to work
+    verbose "found gettags, will try to adopt tags"
+    artist="$(gettags -c "artist" "$filepath")"
+    title="$(gettags -c "title" "$filepath")"
+    album="$(gettags -c "album" "$filepath")"
+    year="$(gettags -c "year" "$filepath")"
+    comment="$(gettags -c "comment" "$filepath")"
+    genre="$(gettags -c "genre" "$filepath")"
+    [[ "$artist"  != "" ]] && more_options+=("--ta" "$artist")
+    [[ "$title"   != "" ]] && more_options+=("--tt" "$title")
+    [[ "$album"   != "" ]] && more_options+=("--tl" "$album")
+    [[ "$year"    != "" ]] && more_options+=("--ty" "$year")
+    [[ "$comment" != "" ]] && more_options+=("--tc" "$comment")
+    [[ "$genre"   != "" ]] && more_options+=("--tg" "$genre")
+  fi
+  # pass options forward
+  verbose "running lame with arguments: (lame ${more_options[@]})"
+  if lame "${more_options[@]}"; then
     log "lame finished successfully"
     verbose "deleting audiodump \"$audiodump\""
     rm -f "$audiodump"
