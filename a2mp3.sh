@@ -1,7 +1,11 @@
 #!/bin/bash
 
 ####
-# todo: maybe use timidity instead of fluidsynth?
+# todo:
+# add config file(s)
+# rewrite in something other than bash (work in progress; see ../ruby/)
+# 
+# maybe use timidity instead of fluidsynth?
 # i.e.:
 # $ timidity -Ow -o output.wav input.mid
 # $ timidity -Ow -o - input.mid | lame - output.mp3
@@ -92,6 +96,21 @@ function verbose
   fi
 }
 
+
+
+function gtags
+{
+  local inpfile="$1"
+  local wanted="$2"
+  if data="$(gettags -c "$wanted" "$inpfile")"; then
+    if [[ "$data" == "Tag not found" ]] || [[ "$data" == "tag not found" ]]; then
+      return 1
+    fi
+    echo "$data"
+  fi
+  return 1
+}
+
 ## if you want to add a new conversion method, make sure to prefix it with 'conv_'!
 ## this pattern is necessary for current_conv, which uses bash's builtin inspection to call it.
 
@@ -105,8 +124,8 @@ function conv_mplayer
   audiodump="tmp.audiodump.wav"
   mpargs=(
     # less verbose output, plz
-    -quiet
-    -msglevel all=2
+    #-quiet
+    #-msglevel all=2
     # conv args
     -vo null
     -vc dummy
@@ -142,6 +161,7 @@ function conv_mplayer
   # check if we can even use gettags
   if type gettags &>/dev/null; then
     # okay, time to get to work
+    # (can this be shortened maybe?)
     verbose "found gettags, will try to adopt tags"
     artist="$(gettags -c "artist" "$filepath")"
     title="$(gettags -c "title" "$filepath")"
@@ -162,6 +182,12 @@ function conv_mplayer
     log "lame finished successfully"
     verbose "deleting audiodump \"$audiodump\""
     rm -f "$audiodump"
+    # on cygwin we need to fix file permissions after processing
+    # for some reason cygwin keeps messing up perms :-/
+    if [[ "$(uname -s)" == CYGWIN* ]]; then
+      verbose "fixing file permissions for '$destination'"
+      chmod 0755 "$destination"
+    fi
     return 0
   fi
   return 1
